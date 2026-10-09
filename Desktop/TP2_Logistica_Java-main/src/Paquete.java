@@ -1,0 +1,38 @@
+public class Paquete {
+    //atributos de la clase , privados para proteger su información.
+    private int numGuia;
+    private double peso;
+    private String destino;
+    private Estado estado;
+   
+   //Constructor
+    public Paquete(int numGuia,double peso,String destino){
+        if(peso<0){
+            throw new ArithmeticException("El peso del Paquete no puede ser negativo");
+        }
+        this.numGuia=numGuia;
+        this.peso=peso;
+        this.destino=destino;
+        this.estado=Estado.RECIBIDO;  // estado por defecto
+    }
+    //el paquete cumpla con la regla del don´t ask
+   
+    public void iniciarPreparacion(){
+        if(this.estado.equals(Estado.RECIBIDO)){
+            this.estado=Estado.EN_PREPARACION;
+        }
+    }
+    public void salirAReparto(){
+        if(this.estado.equals(Estado.EN_PREPARACION)){
+            this.estado=Estado.EN_REPARTO;
+        }
+    }
+    public void registrarEntrega(){
+        if(this.estado.equals(Estado.EN_REPARTO)){
+            this.estado=Estado.ENTREGADO;
+        }
+    }
+    public double getPeso(){
+        return  this.peso;
+    }
+}

@@ -1,19 +1,32 @@
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+
 public class Movimiento {
-    private String descripcion;
+    private Estado estado; //para usar el Enum 
+    private Sucursal sucursal;// para no usar string descripcion y que sea objeto 
     private LocalDateTime fecha;
 
-    public Movimiento(String descripcion) {
-        this.descripcion = descripcion;
+    public Movimiento(Estado estado, Sucursal sucursal) {
+        this.estado=estado;
+        this.sucursal=sucursal;
         this.fecha=LocalDateTime.now();
+    }
+    //metodos que necesito (getters) para que el envio pueda recuperar los datos
+    public Sucursal getSucursal(){
+        return this.sucursal;
+    }
+    public Estado getEstado(){
+        return this.estado;
+    }
+    public LocalDateTime getFecha(){
+        return this.fecha;
     }
 
     @Override
     public String toString() {
-        //para dar formato de dia mes y hora
-        DateTimeFormatter formatter =DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:");
-        return "fecha: " +fecha.format(formatter) + " envio" +descripcion;
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+        String ubicacion = (sucursal != null) ? " en sucursal " + sucursal.getNombre() : "";
+        return "Fecha: " + fecha.format(formatter) + " - Estado del envío: " + estado + ubicacion;
     }
     
 }

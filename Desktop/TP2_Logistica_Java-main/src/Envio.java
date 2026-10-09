@@ -1,69 +1,108 @@
 import java.util.ArrayList;
 
-public abstract class Envio{
-    // atributos para que las subclases puedan acceder
+public abstract class Envio {
     protected ArrayList<Paquete> paquetes;
     protected int diasTranscurridos;
     protected boolean codigoEscaneado;
     protected Cliente cliente;
     private ArrayList<Movimiento> historial;
 
-    //constructor
-    public Envio(Cliente cliente){
-        this.paquetes= new ArrayList<>();//inicializamos una lista vacia
-        this.diasTranscurridos=0; //el envio va a comenzar cuando llega al local
-        this.codigoEscaneado=false; //esto es para saber si fue entregado en destino
-        this.cliente=cliente;
-        this.historial=new ArrayList<>();
-
+    public Envio(Cliente cliente) {
+        this.paquetes = new ArrayList<>();
+        this.diasTranscurridos = 0; 
+        this.codigoEscaneado = false; 
+        this.cliente = cliente;
+        this.historial = new ArrayList<>();
     }
-    // agregar paquetes segun el limite
-    public void agregarPaquete(Paquete paq){
-        if(paquetes.size() <3){
+
+    public void agregarPaquete(Paquete paq) {
+        if (paquetes.size() < 3) {
             paquetes.add(paq);
-            paq.iniciarPreparacion(); // es para no preguntar y respetar la regla de Tell y que cambie de estado
-            historial.add(new Movimiento("Paquete " +paquetes.size() + "agregado y "));
-        }else{
+            paq.iniciarPreparacion(); 
+            // Primer hito: En preparación
+            historial.add(new Movimiento(Estado.EN_PREPARACION, null)); 
+        } else {
             System.out.println("Disculpa pero no se pueden enviar mas de 3 paquetes");
         }
     }
-    // quiero simular que pasa el tiempo
-    public void pasarDias(int dias){
+
+    public void pasarDias(int dias) {
         this.diasTranscurridos += dias;
     }
-    // aca quiero que cuando llegue a destino una persona lo entrega entonces "escanea el codigo" y cambia de estado
-    public void escanearCodigoEntrega(){
-        this.codigoEscaneado=true;
+
+    public void escanearCodigoEntrega() {
+        this.codigoEscaneado = true;
     }
-    // para iniciar el viaje del envio
-    public void iniciarRecorrido(){
-        for (Paquete paq: paquetes){
-            paq.salirAReparto(); // TELL
+
+    public void iniciarRecorrido() {
+        for (Paquete paq : paquetes) {
+            paq.salirAReparto(); 
         }
-        historial.add(new Movimiento("Envio en REPARTO"));
+        historial.add(new Movimiento(Estado.EN_REPARTO, null));
     }
-    //quiero que cuando pase el tiempo de entrega  se escanee el codigo se entrega el paquete
-    public void entregarPaquete(){
-        if(validarTiempoEscaneo()&& codigoEscaneado){
-            for (Paquete paq: paquetes){
-                paq.registrarEntrega();// cambie de estado diciendole
+
+    public void entregarPaquete() {
+        if (validarTiempoEscaneo() && codigoEscaneado) {
+            for (Paquete paq : paquetes) {
+                paq.registrarEntrega();
             }
-            historial.add(new Movimiento("Envio entregado al destinatario"));
+            historial.add(new Movimiento(Estado.ENTREGADO, null));
             System.out.println("Envio entregado con exito");
-        }else{
+        } else {
             System.out.println("Paquete en viaje");
         }
     }
-        //Necesito metodos para Sucursal
-        public void registrarLlegadaASucursal(String nombreCiudad,String codigoPostal){
-            historial.add(new Movimiento( "Llegó a la sucursal de : "+nombreCiudad + "CP: "+codigoPostal));
-        }
-        public void registrarSalidaDeSucursal(String nombreCiudad,String codigoPostal){
-            historial.add(new Movimiento( "Salió a la sucursal de : "+nombreCiudad + "CP: "+codigoPostal));
 
+    // Registrar la llegada guardando la Sucursal y el estado RECIBIDO
+    public void registrarLlegadaASucursal(Sucursal sucursal) {
+        historial.add(new Movimiento(Estado.RECIBIDO, sucursal));
+    }
+
+    // Al salir de la sucursal, el envío vuelve a estar en tránsito/reparto hacia su próximo destino
+    public void registrarSalidaDeSucursal(Sucursal sucursal) {
+        historial.add(new Movimiento(Estado.EN_REPARTO, sucursal));
+    }
+
+    
+     // Retorna la sucursal en la que se encuentra el envío .
+    
+    public Sucursal getSucursalActual() {
+    if (historial.isEmpty()) {
+        return null;
+    }
+
+    // Buscar último hito desde el final del historial
+    for (int i = historial.size() - 1; i >= 0; i--) {
+        Movimiento mov = historial.get(i);
+        
+        // Si el hito más reciente del envío es que está viajando o se entregó,
+        // automáticamente ya NO está en ninguna sucursal física.
+        if (mov.getEstado() == Estado.ENTREGADO || mov.getEstado() == Estado.EN_REPARTO) {
+            return null;
         }
-    // que las subclases se calculen su costo
+        
+        // Si el hito más reciente es que fue recibido, ahi está .
+        if (mov.getEstado() == Estado.RECIBIDO) {
+            return mov.getSucursal(); 
+        }
+    }
+    return null;
+    }
+
+    
+     // Retorna verdadero si el envío está actualmente en la sucursal provista.
+     
+    public boolean estaEnSucursal(Sucursal sucursal) {
+        Sucursal actual = this.getSucursalActual();
+        if (actual == null || sucursal == null) {
+            return false;
+        }
+        // Retorna la comparación de igualdad entre ambos objetos 
+        return actual.equals(sucursal);
+    }
+    public ArrayList<Movimiento> getHistorial() {
+        return this.historial;
+    }
     public abstract double calcularCostoEnvio();
-    // cada tipo de envio tiene diferentes tiempos para que llegue a destino
     public abstract boolean validarTiempoEscaneo();
 }

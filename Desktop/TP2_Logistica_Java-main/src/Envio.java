@@ -14,18 +14,24 @@ public abstract class Envio {
         this.cliente = cliente;
         this.historial = new ArrayList<>();
     }
-
-    public void agregarPaquete(Paquete paq) {
-        if (paquetes.size() < 3) {
-            paquetes.add(paq);
-            paq.iniciarPreparacion(); 
-            // Primer hito: En preparación
-            historial.add(new Movimiento(Estado.EN_PREPARACION, null)); 
-        } else {
-            System.out.println("Disculpa pero no se pueden enviar mas de 3 paquetes");
-        }
+    private boolean hayLugar(){
+        return paquetes.size()<3;
     }
+    private boolean todaviaNoSalio() {
+        return historial.isEmpty() || getSucursalActual() !=null;
 
+    }
+    public void agregarPaquete(Paquete paq) {
+    if (!hayLugar()) {
+        throw new IllegalStateException("Excepción: No se pueden enviar más de 3 paquetes."); 
+    }
+    if (!todaviaNoSalio()) {
+        throw new IllegalStateException("El envío todavia no salió y/o no se recibió "); 
+    }
+    paquetes.add(paq);
+    paq.iniciarPreparacion();
+    historial.add(new Movimiento(Estado.EN_PREPARACION, null));
+    }
     public void pasarDias(int dias) {
         this.diasTranscurridos += dias;
     }
@@ -42,15 +48,17 @@ public abstract class Envio {
     }
 
     public void entregarPaquete() {
-        if (validarTiempoEscaneo() && codigoEscaneado) {
-            for (Paquete paq : paquetes) {
-                paq.registrarEntrega();
-            }
-            historial.add(new Movimiento(Estado.ENTREGADO, null));
-            System.out.println("Envio entregado con exito");
-        } else {
-            System.out.println("Paquete en viaje");
-        }
+    if (paquetes.isEmpty()) {
+        throw new IllegalStateException("Excepción: No se puede registrar un envío sin paquetes."); 
+    }
+    if (!validarTiempoEscaneo() || !codigoEscaneado) {
+        throw new IllegalStateException("Excepción: Paquete en viaje, código no escaneado o fuera de tiempo."); 
+    }
+    for (Paquete paq : paquetes) {
+        paq.registrarEntrega();
+    }
+    historial.add(new Movimiento(Estado.ENTREGADO, null));
+    System.out.println("Envío entregado con éxito");
     }
 
     // Registrar la llegada guardando la Sucursal y el estado RECIBIDO
@@ -75,8 +83,6 @@ public abstract class Envio {
     for (int i = historial.size() - 1; i >= 0; i--) {
         Movimiento mov = historial.get(i);
         
-        // Si el hito más reciente del envío es que está viajando o se entregó,
-        // automáticamente ya NO está en ninguna sucursal física.
         if (mov.getEstado() == Estado.ENTREGADO || mov.getEstado() == Estado.EN_REPARTO) {
             return null;
         }

@@ -1,70 +1,55 @@
 public class Main {
     public static void main(String[] args) {
-        // =========================================================================
-        // INSTANCIAS DE SUCURSALES 
-        // =========================================================================
-        Sucursal sucursalBsAs = new Sucursal("Buenos Aires", "1035");
-        Sucursal sucursalViedma = new Sucursal("Viedma", "8500");
+        //  Instancias de Sucursales y Cliente
         Sucursal sucursalBariloche = new Sucursal("Bariloche", "8400");
+        Sucursal sucursalViedma = new Sucursal("Viedma", "8500");
+        Cliente cliente = new Cliente("Juan", "Mora", "34567843");
 
-        // =========================================================================
-        // CASO 1: Cliente con 3 envíos
-        // =========================================================================
-        System.out.println("=== CASO 1: SIMULACIÓN DE ENVÍOS ===");
-        Cliente cliente1 = new Cliente("Juan", "Mora", "34567843");
+        //  Creación del envío
+        Envio envio = new EnvioEstandar(cliente);
         
-        // Envío 1: Estándar
-        Envio envio1 = new EnvioEstandar(cliente1);
-        envio1.agregarPaquete(new Paquete(101, 1.5, "Bariloche"));
-        
-        //  pasamos el objeto sucursal 
-        envio1.registrarLlegadaASucursal(sucursalBsAs);
-        
-        // Probamos las consultas  mientras está en la sucursal
-        System.out.println("Envío 1 - ¿Está en BsAs?: " + envio1.estaEnSucursal(sucursalBsAs)); // Devuelve true
-        System.out.println("Envío 1 - Sucursal Actual: " + envio1.getSucursalActual().getNombre()); // Devuelve "Buenos Aires"
-        
-        envio1.iniciarRecorrido(); // Pasa a EN_REPARTO (Sale de la sucursal)
-        System.out.println("Envío 1 - ¿Sigue en BsAs luego de iniciar recorrido?: " + envio1.estaEnSucursal(sucursalBsAs)); 
+        System.out.println("=== PREPARANDO ENVÍO ===");
+        envio.agregarPaquete(new Paquete(101, 1.5, "Viedma"));
 
-        // Envío 2: Express 
-        Envio envio2 = new EnvioExpress(cliente1); 
-        envio2.agregarPaquete(new Paquete(102, 4.0, "Viedma"));
-        
-        envio2.registrarLlegadaASucursal(sucursalViedma);
-        System.out.println("Envío 2 - Sucursal Actual: " + envio2.getSucursalActual().getNombre()); // Deberia devolver "Viedma"
+    
+        System.out.println("Costo total estimado: $" + envio.calcularCostoEnvio());
 
-        // Envío 3: Internacional
-        Envio envio3 = new EnvioInternacional(cliente1);
-        envio3.agregarPaquete(new Paquete(103, 0.8, "Miami"));
+        System.out.println("\n=== INICIANDO RUTA DE ENVÍO ===");
         
-        // =========================================================================
-        // CASO 2: Cliente que intenta meter 4 paquetes en UN SOLO envío
-        // =========================================================================
-        System.out.println("\n=== CASO 2: LÍMITE DE PAQUETES (Máximo 3) ===");
-        Cliente cliente2 = new Cliente("Ana", "Martínez", "29165777");
-        Envio otroenvio = new EnvioEstandar(cliente2);
+        // Ingresar a la sucursal de origen
+        sucursalBariloche.recibirEnvio(envio);
+         
+        System.out.println("Sucursal Actual: " + envio.getSucursalActual().getNombre()); 
 
-        System.out.println("Intentando agregar 4 paquetes al envío de Ana...");
-        otroenvio.agregarPaquete(new Paquete(201, 1.0, "Viedma")); 
-        otroenvio.agregarPaquete(new Paquete(202, 1.5, "Viedma")); 
-        otroenvio.agregarPaquete(new Paquete(203, 2.0, "Viedma")); 
-        
-        // Debería saltar el aviso en consola
-        otroenvio.agregarPaquete(new Paquete(204, 3.5, "Buenos Aires")); // Paquete 4 - Muestra mensaje de límite
+        // Despachar para viajar a la otra ciudad
+        sucursalBariloche.despacharEnvio(envio);
+        envio.iniciarRecorrido();
 
-        // =========================================================================
-        // CASO 3: MOSTRAR LOS HISTORIALES DE MOVIMIENTOS (¡LO QUE FALTA AGREGAR!)
-        // =========================================================================
-        System.out.println("\n=== MOSTRANDO HISTORIAL COMPLETO DEL ENVÍO 1 (JUAN) ===");
-        // Recorremos la lista de movimientos pura que nos da el método de Envio
-        for (Movimiento mov : envio1.getHistorial()) {
-            System.out.println(mov); // Llama automáticamente al toString() que armaste
+        // Llegar a la sucursal de destino
+        sucursalViedma.recibirEnvio(envio);
+        System.out.println("Sucursal Actual: " + envio.getSucursalActual().getNombre()); 
+
+        // Salir a reparto final hacia el domicilio del cliente
+        sucursalViedma.despacharEnvio(envio);
+
+        // Escanear y entregar al cliente
+        envio.escanearCodigoEntrega();
+        envio.pasarDias(6); 
+        envio.entregarPaquete();
+
+        //
+        System.out.println("\n=== HISTORIAL COMPLETO DEL ENVÍO ===");
+        for (Movimiento mov : envio.getHistorial()) {
+            System.out.println(mov); 
         }
-
-        System.out.println("\n=== MOSTRANDO HISTORIAL COMPLETO DEL ENVÍO DE ANA ===");
-        for (Movimiento mov : otroenvio.getHistorial()) {
-            System.out.println(mov);
+        
+        
+        System.out.println("\n=== PROBANDO CAPTURA DE EXCEPCIÓN ===");
+        try {
+            System.out.println("Intentando agregar un paquete ...");
+            envio.agregarPaquete(new Paquete(102, 2.0, "Buenos Aires")); 
+        } catch (IllegalStateException e) {
+            System.out.println("Excepción:  " + e.getMessage()); 
         }
     }
 }

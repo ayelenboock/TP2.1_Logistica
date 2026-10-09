@@ -17,22 +17,39 @@ public class Paquete {
     }
     //el paquete cumpla con la regla del don´t ask
    
-    public void iniciarPreparacion(){
-        if(this.estado.equals(Estado.RECIBIDO)){
-            this.estado=Estado.EN_PREPARACION;
-        }
+    public void iniciarPreparacion() {
+    if (!this.estado.equals(Estado.RECIBIDO)) {
+        throw new IllegalStateException("Lo siento, No existe el paquete "); 
     }
-    public void salirAReparto(){
-        if(this.estado.equals(Estado.EN_PREPARACION)){
-            this.estado=Estado.EN_REPARTO;
-        }
+    this.estado = Estado.EN_PREPARACION;
     }
-    public void registrarEntrega(){
-        if(this.estado.equals(Estado.EN_REPARTO)){
-            this.estado=Estado.ENTREGADO;
-        }
+
+    public void salirAReparto() {
+         if (!this.estado.equals(Estado.EN_PREPARACION)) {
+         throw new IllegalStateException("El paquete no está preparado para salir."); 
     }
-    public double getPeso(){
-        return  this.peso;
+     this.estado = Estado.EN_REPARTO;
+    }
+
+    public void registrarEntrega() {
+        if (!this.estado.equals(Estado.EN_REPARTO)) {
+         throw new IllegalStateException("No se puede entregar un paquete que no fue despachado."); 
+    }
+     this.estado = Estado.ENTREGADO;
+   }
+    public double getPeso() {
+        return this.peso;
+    }
+
+    public String getDestino() {
+        return this.destino;
+    }
+
+    public int getNumGuia() {
+        return this.numGuia;
+    }
+
+    public Estado getEstado() {
+        return this.estado;
     }
 }
